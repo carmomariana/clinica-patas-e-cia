@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Clínica Patas &amp; Cia — Gestão de Tutores e Animais</title>
+    <link rel="stylesheet" href="./estilos/principal.css" />
+  </head>
+  <body>
+    <header class="cabecalho-sistema">
+      <div class="container-largura cabecalho-interno">
+        <a href="#/tutores" class="marca-clinica" aria-label="Página inicial da Clínica Patas e Cia">
+          <span class="icone-marca" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="4" r="2"></circle>
+              <circle cx="18" cy="8" r="2"></circle>
+              <circle cx="20" cy="16" r="2"></circle>
+              <path d="M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.045Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z"></path>
+            </svg>
+          </span>
+          <div>
+            <span class="titulo-marca">Clínica Patas &amp; Cia</span>
+            <span class="subtitulo-marca">Recepção • Gestão de Tutores e Animais</span>
+          </div>
+        </a>
+
+        <nav class="navegacao-principal" aria-label="Navegação principal">
+          <a href="#/tutores" class="link-nav" data-nav="tutores">Tutores</a>
+          <a href="#/tutores/novo" class="botao botao-primario botao-cabecalho" data-nav="novo-tutor">
+            + Novo Tutor
+          </a>
+        </nav>
+      </div>
+    </header>
+
+    <div class="barra-trilha">
+      <nav class="container-largura" aria-label="Localização atual">
+        <ol id="lista-trilha-navegacao" class="lista-trilha"></ol>
+      </nav>
+    </div>
+
+    <main class="container-largura conteudo-principal">
+      <div id="aviso-protocolo-arquivo" class="alerta-global alerta-erro" hidden>
+        <span class="alerta-icone" aria-hidden="true">!</span>
+        <div class="alerta-conteudo">
+          <strong class="alerta-titulo">Abra a aplicação por um servidor local ou GitHub Pages</strong>
+          <p class="alerta-mensagem">
+            O navegador bloqueia módulos JavaScript modernos quando o arquivo é aberto diretamente via
+            <code>file://</code>. Utilize a extensão <strong>Live Server</strong> no VS Code ou execute
+            <code>python3 -m http.server 8000</code> na pasta do projeto e acesse
+            <code>http://localhost:8000</code>.
+          </p>
+        </div>
+      </div>
+
+      <div id="container-alerta-global" hidden></div>
+
+      <!-- TELA 1: LISTA DE TUTORES -->
+      <section id="tela-lista-tutores" class="painel-tela" aria-labelledby="titulo-lista-tutores">
+        <div class="cabecalho-tela">
+          <div>
+            <h1 id="titulo-lista-tutores" class="titulo-tela">Tutores Cadastrados</h1>
+            <p class="descricao-tela">
+              Localize rapidamente o tutor ou seu animal para agilizar agendamentos e evitar duplicidades.
+            </p>
+          </div>
+
+          <div class="grade-indicadores" aria-label="Resumo da clínica">
+            <div class="cartao-indicador">
+              <span class="valor-indicador" id="indicador-total-tutores">0</span>
+              <span class="rotulo-indicador">Tutores ativos</span>
+            </div>
+            <div class="cartao-indicador">
+              <span class="valor-indicador" id="indicador-total-animais">0</span>
+              <span class="rotulo-indicador">Animais atendidos</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="barra-ferramentas">
+          <div class="campo-busca-wrapper">
+            <label for="campo-busca-tutores" class="apenas-leitor-tela">
+              Buscar por tutor, telefone ou nome do animal
+            </label>
+            <input
+              type="search"
+              id="campo-busca-tutores"
+              class="campo-entrada campo-busca"
+              placeholder="Buscar por nome do tutor, telefone ou nome do animal (ex.: Thor, 99812)..."
+            />
+            <button
+              type="button"
+              id="botao-limpar-busca"
+              class="botao botao-contorno botao-pequeno"
+              hidden
+            >
+              Limpar
+            </button>
+          </div>
+
+          <a href="#/tutores/novo" class="botao botao-primario">
+            + Cadastrar Tutor
+          </a>
+        </div>
+
+        <div id="container-tabela-tutores" class="cartao-tabela">
+          <div class="rolagem-tabela">
+            <table class="tabela-dados">
+              <thead>
+                <tr>
+                  <th scope="col">Tutor</th>
+                  <th scope="col">Telefone e Endereço</th>
+                  <th scope="col">Animais Vinculados</th>
+                  <th scope="col" class="coluna-acoes">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="corpo-tabela-tutores"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="estado-vazio-tutores" class="estado-vazio" hidden>
+          <p id="mensagem-vazio-tutores" class="texto-estado-vazio">
+            Nenhum tutor encontrado.
+          </p>
+          <button type="button" id="botao-novo-tutor-vazio" class="botao botao-primario">
+            + Cadastrar Primeiro Tutor
+          </button>
+        </div>
+      </section>
+
+      <!-- TELA 2: CADASTRO / EDIÇÃO DE TUTOR -->
+      <section id="tela-formulario-tutor" class="painel-tela" aria-labelledby="titulo-formulario-tutor" hidden>
+        <div class="cabecalho-tela cabecalho-formulario">
+          <div>
+            <h1 id="titulo-formulario-tutor" class="titulo-tela">Cadastrar Novo Tutor</h1>
+            <p id="subtitulo-formulario-tutor" class="descricao-tela">
+              Preencha os dados obrigatórios do tutor para registrá-lo na clínica.
+            </p>
+          </div>
+          <a href="#/tutores" class="botao botao-contorno">← Voltar para Tutores</a>
+        </div>
+
+        <form id="formulario-tutor" class="cartao-formulario" novalidate>
+          <div class="grade-campos">
+            <div class="grupo-campo campo-largura-total">
+              <label for="tutor-nome" class="rotulo-campo">
+                Nome completo <span class="obrigatorio" aria-hidden="true">*</span>
+              </label>
+              <input
+                type="text"
+                id="tutor-nome"
+                name="nome"
+                class="campo-entrada"
+                placeholder="Ex.: Ana Paula Mendes"
+                autocomplete="name"
+                required
+              />
+              <span class="mensagem-erro-campo" data-erro-campo="nome" hidden></span>
+            </div>
+
+            <div class="grupo-campo">
+              <label for="tutor-telefone" class="rotulo-campo">
+                Telefone / WhatsApp <span class="obrigatorio" aria-hidden="true">*</span>
+              </label>
+              <input
+                type="tel"
+                id="tutor-telefone"
+                name="telefone"
+                class="campo-entrada"
+                placeholder="(85) 99999-9999"
+                autocomplete="tel"
+                required
+              />
+              <span class="dica-campo">Formato aceito: (DD) 9XXXX-XXXX ou (DD) XXXX-XXXX</span>
+              <span class="mensagem-erro-campo" data-erro-campo="telefone" hidden></span>
+            </div>
+
+            <div class="grupo-campo">
+              <label for="tutor-email" class="rotulo-campo">E-mail (opcional)</label>
+              <input
+                type="email"
+                id="tutor-email"
+                name="email"
+                class="campo-entrada"
+                placeholder="tutor@email.com"
+                autocomplete="email"
+              />
+              <span class="mensagem-erro-campo" data-erro-campo="email" hidden></span>
+            </div>
+
+            <div class="grupo-campo campo-largura-total">
+              <label for="tutor-endereco" class="rotulo-campo">
+                Endereço / Bairro <span class="obrigatorio" aria-hidden="true">*</span>
+              </label>
+              <input
+                type="text"
+                id="tutor-endereco"
+                name="endereco"
+                class="campo-entrada"
+                placeholder="Ex.: Rua Barbosa de Freitas, 1240 - Aldeota"
+                required
+              />
+              <span class="mensagem-erro-campo" data-erro-campo="endereco" hidden></span>
+            </div>
+
+            <div class="grupo-campo campo-largura-total">
+              <label for="tutor-observacoes" class="rotulo-campo">Observações de atendimento</label>
+              <textarea
+                id="tutor-observacoes"
+                name="observacoes"
+                class="campo-entrada campo-area-texto"
+                rows="3"
+                placeholder="Preferência de horário, recados importantes da recepção..."
+              ></textarea>
+            </div>
+          </div>
+
+          <div class="rodape-formulario">
+            <span class="nota-obrigatorio"><span class="obrigatorio">*</span> Campos obrigatórios</span>
+            <div class="acoes-formulario">
+              <button type="button" id="botao-cancelar-tutor" class="botao botao-contorno">
+                Cancelar
+              </button>
+              <button type="submit" id="botao-salvar-tutor" class="botao botao-primario">
+                Cadastrar Tutor
+              </button>
+            </div>
+          </div>
+        </form>
+      </section>
+
+      <!-- TELA 3: LISTA DE ANIMAIS DE UM TUTOR -->
+      <section id="tela-lista-animais" class="painel-tela" aria-labelledby="titulo-secao-animais" hidden>
+        <div class="barra-retorno">
+          <a href="#/tutores" class="botao botao-contorno">← Voltar para Lista de Tutores</a>
+        </div>
+
+        <div id="resumo-tutor-selecionado" class="cartao-resumo-tutor"></div>
+
+        <div class="cabecalho-subsecao">
+          <div>
+            <h1 id="titulo-secao-animais" class="titulo-tela">Animais do Tutor</h1>
+            <p class="descricao-tela">
+              Gerencie os animais pertencentes a este tutor para manter o histórico sempre organizado.
+            </p>
+          </div>
+          <a id="link-novo-animal-topo" href="#/tutores" class="botao botao-primario">
+            + Cadastrar Animal
+          </a>
+        </div>
+
+        <div id="container-tabela-animais" class="cartao-tabela">
+          <div class="rolagem-tabela">
+            <table class="tabela-dados">
+              <thead>
+                <tr>
+                  <th scope="col">Nome e Sexo</th>
+                  <th scope="col">Espécie e Raça</th>
+                  <th scope="col">Idade e Peso</th>
+                  <th scope="col">Observações Clínicas</th>
+                  <th scope="col" class="coluna-acoes">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="corpo-tabela-animais"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="estado-vazio-animais" class="estado-vazio" hidden>
+          <p class="texto-estado-vazio">
+            Este tutor ainda não possui animais cadastrados.
+          </p>
+          <a id="link-novo-animal-vazio" href="#/tutores" class="botao botao-primario">
+            + Cadastrar Primeiro Animal
+          </a>
+        </div>
+      </section>
+
+      <!-- TELA 4: CADASTRO / EDIÇÃO DE ANIMAL -->
+      <section id="tela-formulario-animal" class="painel-tela" aria-labelledby="titulo-formulario-animal" hidden>
+        <div class="cabecalho-tela cabecalho-formulario">
+          <div>
+            <h1 id="titulo-formulario-animal" class="titulo-tela">Cadastrar Novo Animal</h1>
+            <p id="subtitulo-formulario-animal" class="descricao-tela">
+              Cadastre um novo animal vinculado ao tutor selecionado.
+            </p>
+          </div>
+        </div>
+
+        <div class="faixa-vinculo-tutor">
+          <span class="rotulo-vinculo">Tutor responsável:</span>
+          <strong id="texto-tutor-vinculado">—</strong>
+        </div>
+
+        <form id="formulario-animal" class="cartao-formulario" novalidate>
+          <div class="grade-campos">
+            <div class="grupo-campo">
+              <label for="animal-nome" class="rotulo-campo">
+                Nome do animal <span class="obrigatorio" aria-hidden="true">*</span>
+              </label>
+              <input
+                type="text"
+                id="animal-nome"
+                name="nome"
+                class="campo-entrada"
+                placeholder="Ex.: Thor"
+                required
+              />
+              <span class="mensagem-erro-campo" data-erro-campo="nome" hidden></span>
+            </div>
+
+            <div class="grupo-campo">
+              <label for="animal-especie" class="rotulo-campo">
+                Espécie <span class="obrigatorio" aria-hidden="true">*</span>
+              </label>
+              <select id="animal-especie" name="especie" class="campo-entrada" required>
+                <option value="">Selecione a espécie...</option>
+                <option value="Cachorro">Cachorro</option>
+                <option value="Gato">Gato</option>
+                <option value="Ave">Ave</option>
+                <option value="Roedor">Roedor</option>
+                <option value="Réptil">Réptil</option>
+                <option value="Outro">Outro</option>
+              </select>
+              <span class="mensagem-erro-campo" data-erro-campo="especie" hidden></span>
+            </div>
+
+            <div class="grupo-campo">
+              <label for="animal-raca" class="rotulo-campo">
+                Raça <span class="obrigatorio" aria-hidden="true">*</span>
+              </label>
+              <input
+                type="text"
+                id="animal-raca"
+                name="raca"
+                class="campo-entrada"
+                placeholder="Ex.: Golden Retriever ou SRD"
+                required
+              />
+              <span class="mensagem-erro-campo" data-erro-campo="raca" hidden></span>
+            </div>
+
+            <div class="grupo-campo">
+              <label for="animal-sexo" class="rotulo-campo">
+                Sexo <span class="obrigatorio" aria-hidden="true">*</span>
+              </label>
+              <select id="animal-sexo" name="sexo" class="campo-entrada" required>
+                <option value="">Selecione o sexo...</option>
+                <option value="Macho">Macho</option>
+                <option value="Fêmea">Fêmea</option>
+              </select>
+              <span class="mensagem-erro-campo" data-erro-campo="sexo" hidden></span>
+            </div>
+
+            <div class="grupo-campo">
+              <label for="animal-idade" class="rotulo-campo">
+                Idade (anos) <span class="obrigatorio" aria-hidden="true">*</span>
+              </label>
+              <input
+                type="number"
+                id="animal-idade"
+                name="idadeAnos"
+                class="campo-entrada"
+                min="0"
+                max="40"
+                step="1"
+                placeholder="Ex.: 3 (use 0 para filhotes < 1 ano)"
+                required
+              />
+              <span class="mensagem-erro-campo" data-erro-campo="idadeAnos" hidden></span>
+            </div>
+
+            <div class="grupo-campo">
+              <label for="animal-peso" class="rotulo-campo">
+                Peso (kg) <span class="obrigatorio" aria-hidden="true">*</span>
+              </label>
+              <input
+                type="number"
+                id="animal-peso"
+                name="pesoKg"
+                class="campo-entrada"
+                min="0.1"
+                max="150"
+                step="0.1"
+                placeholder="Ex.: 8.5"
+                required
+              />
+              <span class="mensagem-erro-campo" data-erro-campo="pesoKg" hidden></span>
+            </div>
+
+            <div class="grupo-campo campo-largura-total">
+              <label for="animal-observacoes" class="rotulo-campo">
+                Observações clínicas / Alergias
+              </label>
+              <textarea
+                id="animal-observacoes"
+                name="observacoes"
+                class="campo-entrada campo-area-texto"
+                rows="3"
+                placeholder="Vacinas recentes, alergias medicamentosas, comportamento..."
+              ></textarea>
+            </div>
+          </div>
+
+          <div class="rodape-formulario">
+            <span class="nota-obrigatorio"><span class="obrigatorio">*</span> Campos obrigatórios</span>
+            <div class="acoes-formulario">
+              <button type="button" id="botao-cancelar-animal" class="botao botao-contorno">
+                Cancelar
+              </button>
+              <button type="submit" id="botao-salvar-animal" class="botao botao-primario">
+                Cadastrar Animal
+              </button>
+            </div>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <footer class="rodape-sistema">
+      <div class="container-largura rodape-interno">
+        <span><strong>Clínica Patas &amp; Cia</strong> — Sistema Web de Gestão de Tutores e Animais</span>
+        <span>Persistência em memória • Arquitetura em camadas (Interface, Serviço e Dados)</span>
+      </div>
+    </footer>
+
+    <!-- MODAL DE CONFIRMAÇÃO DE EXCLUSÃO -->
+    <div
+      id="modal-confirmacao"
+      class="fundo-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-titulo"
+      aria-describedby="modal-descricao"
+      hidden
+    >
+      <div class="caixa-modal">
+        <h2 id="modal-titulo" class="titulo-modal">Confirmar ação</h2>
+        <p id="modal-descricao" class="descricao-modal"></p>
+        <div class="acoes-modal">
+          <button type="button" id="botao-cancelar-modal" class="botao botao-contorno">
+            Cancelar
+          </button>
+          <button type="button" id="botao-confirmar-modal" class="botao botao-perigo">
+            Confirmar exclusão
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="./src/aplicacao.js"></script>
+    <script>
+      window.addEventListener("load", function () {
+        if (window.location.protocol === "file:" && !window.__PATAS_E_CIA_CARREGADO__) {
+          var aviso = document.getElementById("aviso-protocolo-arquivo");
+          if (aviso) {
+            aviso.hidden = false;
+          }
+        }
+      });
+    </script>
+  </body>
+</html>
