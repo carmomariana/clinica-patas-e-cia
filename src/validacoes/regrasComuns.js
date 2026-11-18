@@ -80,11 +80,11 @@ export function validarTelefoneBrasileiro(telefone) {
 
   const primeiroDigitoNumero = Number(digitos[2]);
   if (digitos.length === 11 && primeiroDigitoNumero !== 9) {
-    return "Telefones celulares com 11 dígitos devem iniciar com o dígito 9 após o DDD.";
+    return "Telefones celulares com 9 dígitos devem iniciar com o dígito 9 após o DDD.";
   }
 
   if (digitos.length === 10 && (primeiroDigitoNumero < 2 || primeiroDigitoNumero > 5)) {
-    return "Telefones fixos com 10 dígitos devem iniciar entre 2 e 5 após o DDD.";
+    return "Telefones fixos com 8 dígitos devem iniciar entre 2 e 5 após o DDD.";
   }
 
   if (/^(\d)\1+$/.test(digitos.slice(2))) {
